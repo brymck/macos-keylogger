@@ -41,7 +41,6 @@ static inline CGEventRef CGEventCallback(CGEventTapProxy proxy,
 
     // Detect modifier keys
     const CGEventFlags flags = CGEventGetFlags(event);
-
     bool ctrl = (flags & kCGEventFlagMaskControl) != 0;
     bool opt = (flags & kCGEventFlagMaskAlternate) != 0;
     bool shift = (flags & kCGEventFlagMaskShift) != 0;
@@ -50,13 +49,14 @@ static inline CGEventRef CGEventCallback(CGEventTapProxy proxy,
     // TODO Just use Carbon since I obviously need to do some conversion anyway
     UInt16 modifierKeyState = shift << 1 | ctrl << 2 | opt << 3 | cmd << 4;
 
+    // Determine keyboard layout
     TISInputSourceRef currentKeyboard = TISCopyCurrentKeyboardLayoutInputSource();
     CFDataRef layoutData = TISGetInputSourceProperty(currentKeyboard, kTISPropertyUnicodeKeyLayoutData);
     const UCKeyboardLayout *keyboardLayout = (UCKeyboardLayout *)CFDataGetBytePtr(layoutData);
+
     static UInt32 deadKeyState = 0;
     UniCharCount actualStringLength = 0;
     UniChar unicodeString[MAX_STRING_LENGTH];
-
     OSStatus status = UCKeyTranslate(keyboardLayout,
                                      keyCode,
                                      kUCKeyActionDisplay,
@@ -67,6 +67,12 @@ static inline CGEventRef CGEventCallback(CGEventTapProxy proxy,
                                      MAX_STRING_LENGTH,
                                      &actualStringLength,
                                      unicodeString);
+    if (status != noErr) {
+        fprintf(stderr,
+                "ERROR: Unable to translate key code to unicode string: %d\n",
+                (int)status);
+        return event;
+    }
 
     handleButtonEvent((int)keyCode,
                       (int)unicodeString[0],

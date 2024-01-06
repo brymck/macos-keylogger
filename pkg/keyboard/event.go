@@ -8,7 +8,7 @@ import (
 type Event struct {
 	Notation string
 	Ch       rune
-	Key      string
+	Key      rune
 	State    State
 	Ctrl     bool
 	Opt      bool
@@ -16,7 +16,7 @@ type Event struct {
 	Cmd      bool
 }
 
-func NewEvent(key string, ch rune, state State, ctrl bool, opt bool, shift bool, cmd bool) Event {
+func NewEvent(key rune, ch rune, state State, ctrl bool, opt bool, shift bool, cmd bool) Event {
 	var builder strings.Builder
 
 	if !unicode.IsPrint(ch) || ch == ' ' {
@@ -24,33 +24,30 @@ func NewEvent(key string, ch rune, state State, ctrl bool, opt bool, shift bool,
 	}
 
 	if ctrl {
-		builder.WriteString("C-")
+		builder.WriteRune('⌃')
 	}
 
 	if opt {
-		builder.WriteString("A-")
+		builder.WriteRune('⌥')
 	}
 
 	if shift {
 		if ch == 0 {
-			builder.WriteString("S-")
+			builder.WriteRune('⇧')
 		}
 	}
 
 	if cmd {
-		builder.WriteString("D-")
+		builder.WriteRune('⌘')
 	}
 
 	if ch == 0 {
-		builder.WriteString(key)
+		builder.WriteRune(key)
 	} else {
 		builder.WriteRune(ch)
 	}
 
 	notation := builder.String()
-	if len(notation) > 1 {
-		notation = "<" + notation + ">"
-	}
 
 	return Event{
 		Notation: notation,
