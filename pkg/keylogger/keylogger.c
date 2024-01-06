@@ -21,7 +21,7 @@ CGEventRef CGEventCallback(CGEventTapProxy proxy,
                            CGEventRef event,
                            void *refcon) {
     // Validate the input event
-	State state;
+    State state;
     if (type == kCGEventKeyDown) {
         state = Down;
     } else if (type == kCGEventKeyUp) {
@@ -49,7 +49,7 @@ CGEventRef CGEventCallback(CGEventTapProxy proxy,
                       shift,
                       cmd);
 
-	return event;
+    return event;
 }
 
 static inline void listen() {
