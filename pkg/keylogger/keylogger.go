@@ -1,6 +1,6 @@
 package keylogger
 
-// #cgo LDFLAGS: -framework CoreFoundation -framework CoreGraphics
+// #cgo LDFLAGS: -framework Carbon -framework CoreFoundation -framework CoreGraphics
 // #include "keylogger.c"
 import "C"
 
@@ -14,15 +14,23 @@ import (
 
 type Callback func(event keyboard.Event)
 
-type cCallback func(keyCode C.int, stateCode C.State, ctrl C.bool, opt C.bool, shift C.bool, cmd C.bool)
-
 type KeyLogger struct{}
 
-var _f cCallback
+var callback Callback
 
 //export handleButtonEvent
-func handleButtonEvent(keyCode C.int, stateCode C.State, ctrl C.bool, opt C.bool, shift C.bool, cmd C.bool) {
-	_f(keyCode, stateCode, ctrl, opt, shift, cmd)
+func handleButtonEvent(keyCode C.int, ch C.int, stateCode C.State, ctrl C.bool, opt C.bool, shift C.bool, cmd C.bool) {
+	key, err := keyboard.ConvertKeyCode(int(keyCode))
+	if err != nil {
+		fmt.Printf("Could not convert key code: %d\n", int(keyCode))
+		return
+	}
+
+	state := keyboard.State(stateCode)
+
+	event := keyboard.NewEvent(key, rune(ch), state, bool(ctrl), bool(opt), bool(shift), bool(cmd))
+
+	callback(event)
 }
 
 func New() (*KeyLogger, error) {
@@ -38,19 +46,7 @@ func New() (*KeyLogger, error) {
 	return &KeyLogger{}, nil
 }
 
-func (k *KeyLogger) Listen(f Callback) {
-	_f = func(keyCode C.int, stateCode C.State, ctrl C.bool, opt C.bool, shift C.bool, cmd C.bool) {
-		key, err := keyboard.ConvertKeyCode(int(keyCode))
-		if err != nil {
-			fmt.Printf("Could not convert key code: %d\n", int(keyCode))
-			return
-		}
-
-		state := keyboard.State(stateCode)
-
-		event := keyboard.NewEvent(key, state, bool(ctrl), bool(opt), bool(shift), bool(cmd))
-
-		f(event)
-	}
+func (k *KeyLogger) Listen(cb Callback) {
+	callback = cb
 	C.listen()
 }

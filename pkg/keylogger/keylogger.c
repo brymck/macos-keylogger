@@ -1,5 +1,6 @@
 #include <CoreFoundation/CoreFoundation.h>
 #include <CoreGraphics/CoreGraphics.h>
+#include <Carbon/Carbon.h>
 #include "keylogger.h"
 
 typedef enum State {
@@ -9,6 +10,7 @@ typedef enum State {
 } State;
 
 extern void handleButtonEvent(int k,
+                              int ch,
                               State s,
                               bool ctrl,
                               bool opt,
@@ -16,10 +18,10 @@ extern void handleButtonEvent(int k,
                               bool cmd);
 
 // The following callback method is invoked on every keypress.
-CGEventRef CGEventCallback(CGEventTapProxy proxy,
-                           CGEventType type,
-                           CGEventRef event,
-                           void *refcon) {
+static inline CGEventRef CGEventCallback(CGEventTapProxy proxy,
+                                         CGEventType type,
+                                         CGEventRef event,
+                                         void *refcon) {
     // Validate the input event
     State state;
     if (type == kCGEventKeyDown) {
@@ -42,7 +44,22 @@ CGEventRef CGEventCallback(CGEventTapProxy proxy,
     bool shift = (flags & kCGEventFlagMaskShift) != 0;
     bool cmd = (flags & kCGEventFlagMaskCommand) != 0;
 
+    //UniChar character = convertKeyCodeToCharacter(keyCode, shift);
+    //printf("Character: %lc\n", character);
+    TISInputSourceRef currentKeyboard = TISCopyCurrentKeyboardLayoutInputSource();
+    CFDataRef layoutData = TISGetInputSourceProperty(currentKeyboard, kTISPropertyUnicodeKeyLayoutData);
+    const UCKeyboardLayout *keyboardLayout = (const UCKeyboardLayout *)CFDataGetBytePtr(layoutData);
+
+    UInt32 deadKeyState = 0;
+    UniCharCount maxStringLength = 2;
+    UniCharCount actualStringLength = 0;
+    UniChar unicodeString[maxStringLength];
+
+    // UInt32 modifierKeyState = shiftPressed ? shiftKey : 0;
+    OSStatus status = UCKeyTranslate(keyboardLayout, keyCode, kUCKeyActionDown, flags, LMGetKbdType(), 0, &deadKeyState, maxStringLength, &actualStringLength, unicodeString);
+
     handleButtonEvent((int)keyCode,
+                      (int)unicodeString[0],
                       state,
                       ctrl,
                       opt,
@@ -51,6 +68,29 @@ CGEventRef CGEventCallback(CGEventTapProxy proxy,
 
     return event;
 }
+
+/*
+UniChar convertKeyCodeToCharacter(CGKeyCode keyCode, bool shiftPressed) {
+    TISInputSourceRef currentKeyboard = TISCopyCurrentKeyboardLayoutInputSource();
+    CFDataRef layoutData = TISGetInputSourceProperty(currentKeyboard, kTISPropertyUnicodeKeyLayoutData);
+    const UCKeyboardLayout *keyboardLayout = (const UCKeyboardLayout *)CFDataGetBytePtr(layoutData);
+
+    UInt32 deadKeyState = 0;
+    UniCharCount maxStringLength = 255;
+    UniCharCount actualStringLength = 0;
+    UniChar unicodeString[maxStringLength];
+
+    UInt32 modifierKeyState = shiftPressed ? shiftKey : 0;
+    OSStatus status = UCKeyTranslate(keyboardLayout, keyCode, kUCKeyActionDown, modifierKeyState, LMGetKbdType(), 0, &deadKeyState, maxStringLength, &actualStringLength, unicodeString);
+
+    if (status == noErr && actualStringLength > 0) {
+        return unicodeString[0];
+    } else {
+        return 0; // No character found or an error occurred
+    }
+    return 0;
+}
+*/
 
 static inline void listen() {
     CGEventMask eventMask = CGEventMaskBit(kCGEventKeyDown) | CGEventMaskBit(kCGEventKeyUp);

@@ -7,9 +7,9 @@ import (
 
 func TestConvertKeyCode(t *testing.T) {
 	var tests = []struct {
-        keyCode int
-        wantKey string
-        wantErr error
+		keyCode int
+		wantKey string
+		wantErr error
 	}{
 		{-1, "", ErrInvalidKeyCode},
 		{0, "a", nil},
@@ -25,9 +25,9 @@ func TestConvertKeyCode(t *testing.T) {
 			if key != tt.wantKey {
 				t.Errorf("got %s, want %s", key, tt.wantKey)
 			}
-            if err != tt.wantErr {
-                t.Errorf("got %v, want %v", err, tt.wantErr)
-            }
+			if err != tt.wantErr {
+				t.Errorf("got %v, want %v", err, tt.wantErr)
+			}
 		})
 	}
 }

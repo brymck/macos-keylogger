@@ -1,9 +1,13 @@
 package keyboard
 
-import "strings"
+import (
+	"strings"
+	"unicode"
+)
 
 type Event struct {
 	Notation string
+	Ch       rune
 	Key      string
 	State    State
 	Ctrl     bool
@@ -12,8 +16,12 @@ type Event struct {
 	Cmd      bool
 }
 
-func NewEvent(key string, state State, ctrl bool, opt bool, shift bool, cmd bool) Event {
+func NewEvent(key string, ch rune, state State, ctrl bool, opt bool, shift bool, cmd bool) Event {
 	var builder strings.Builder
+
+	if !unicode.IsPrint(ch) || ch == ' ' {
+		ch = 0
+	}
 
 	if ctrl {
 		builder.WriteString("C-")
@@ -24,14 +32,20 @@ func NewEvent(key string, state State, ctrl bool, opt bool, shift bool, cmd bool
 	}
 
 	if shift {
-		builder.WriteString("S-")
+		if ch == 0 {
+			builder.WriteString("S-")
+		}
 	}
 
 	if cmd {
 		builder.WriteString("D-")
 	}
 
-	builder.WriteString(key)
+	if ch == 0 {
+		builder.WriteString(key)
+	} else {
+		builder.WriteRune(ch)
+	}
 
 	notation := builder.String()
 	if len(notation) > 1 {
@@ -40,6 +54,7 @@ func NewEvent(key string, state State, ctrl bool, opt bool, shift bool, cmd bool
 
 	return Event{
 		Notation: notation,
+		Ch:       ch,
 		Key:      key,
 		State:    state,
 		Ctrl:     ctrl,
