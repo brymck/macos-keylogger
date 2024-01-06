@@ -23,8 +23,9 @@ func main() {
 		os.Exit(1)
 	} else if len(os.Args) > 2 {
 		lingerMs, err := strconv.Atoi(os.Args[2])
-		if err != nil {
-			fmt.Printf("Error: linger time must be an integer\n")
+		if err != nil || lingerMs < 0 {
+			fmt.Printf("Error: linger time must be a non-negative integer\n")
+			os.Exit(1)
 		}
 		lingerTime = time.Duration(lingerMs) * time.Millisecond
 	} else {
