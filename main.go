@@ -14,7 +14,7 @@ func main() {
 	}
 	kl.Listen(func(event keyboard.Event) {
 		if event.State == keyboard.Down {
-			fmt.Print(event.Notation)
+			fmt.Printf("%s %v\n", event.Notation, event)
 		}
 	})
 }
