@@ -14,5 +14,5 @@ enabling whichever terminal application you'll use to run this.
 git clone https://github.com/brymck/macos-keylogger.git
 cd macos-keylogger
 go build
-sudo ./macos-keylogger
+sudo ./macos-keylogger ~/corpus.txt
 ```

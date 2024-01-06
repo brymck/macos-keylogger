@@ -5,7 +5,7 @@ import "testing"
 func TestNewEvent(t *testing.T) {
 	var tests = []struct {
 		key   rune
-        ch    rune
+		ch    rune
 		state State
 		ctrl  bool
 		opt   bool
